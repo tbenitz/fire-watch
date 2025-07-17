@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fire Watch - Detecting Fire and Smoke using an AI Vision Model</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .tabs {
+            display: flex;
+            justify-content: center;
+            background: #ddd;
+            padding: 10px 0;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #bbb;
+            margin: 0 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .tab.active {
+            background: #888;
+            color: white;
+        }
+        .content-container {
+            width: 100%;
+            height: calc(100vh - 80px);
+            position: relative;
+            overflow-y: auto;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: none;
+        }
+        .bottom-frame {
+            width: 100%;
+            height: 50px;
+            background: #ddd;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            z-index: 10;
+        }
+        .video-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+        }
+        .video-pair {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .pair1 video {
+            width: 48%;
+            max-width: 300px;
+        }
+        .pair2 video {
+            width: 96%;
+            max-width: 600px;
+        }
+    </style>
+    <script>
+        function switchTab(contentId, element) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            element.classList.add('active');
+            document.querySelectorAll('.content-container > *').forEach(el => el.style.display = 'none');
+            document.getElementById(contentId).style.display = 'block';
+            
+            // Stop all videos when leaving the examples tab
+            if (contentId !== 'examples') {
+                document.querySelectorAll('.video-container video').forEach(video => {
+                    video.pause();
+                });
+            }
+        }
+        function syncVideos(pairId) {
+            const videos = document.querySelectorAll(`.${pairId} video`);
+            let syncing = false;
+            
+            videos.forEach(video => {
+                video.onplay = () => {
+                    if (!syncing) {
+                        syncing = true;
+                        videos.forEach(v => { if (v !== video) v.play(); });
+                        syncing = false;
+                    }
+                };
+                video.onpause = () => {
+                    if (!syncing) {
+                        syncing = true;
+                        videos.forEach(v => { if (v !== video) v.pause(); });
+                        syncing = false;
+                    }
+                };
+                video.ontimeupdate = () => {
+                    if (!syncing) {
+                        syncing = true;
+                        videos.forEach(v => {
+                            if (v !== video && Math.abs(v.currentTime - video.currentTime) > 0.1) {
+                                v.currentTime = video.currentTime;
+                            }
+                        });
+                        syncing = false;
+                    }
+                };
+            });
+        }
+        document.addEventListener("DOMContentLoaded", () => {
+            syncVideos("pair1");
+            syncVideos("pair2");
+        });
+    </script>
+</head>
+<body>
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('iframe1', this)">Image and Video Upload</div>
+        <div class="tab" onclick="switchTab('iframe2', this)">Traffic/Webcam</div>
+        <div class="tab" onclick="switchTab('examples', this)">Examples</div>
+    </div>
+    <div class="content-container">
+        <iframe id="iframe1" src="https://tstone87-ccr-colorado.hf.space" style="display: block;"></iframe>
+        <iframe id="iframe2" src="https://tstone87-fire-watch-co.hf.space"></iframe>
+        <div id="examples" class="video-container">
+            <h2>Example Results</h2>
+            <div class="video-pair pair1">
+                <video controls>
+                    <source src="https://huggingface.co/spaces/tstone87/ccr-colorado/resolve/main/T1.mp4" type="video/mp4">
+                </video>
+                <video controls>
+                    <source src="https://huggingface.co/spaces/tstone87/ccr-colorado/resolve/main/T2.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="video-pair pair2">
+                <video controls>
+                    <source src="https://huggingface.co/spaces/tstone87/ccr-colorado/resolve/main/LA1.mp4" type="video/mp4">
+                </video>
+                <video controls>
+                    <source src="https://huggingface.co/spaces/tstone87/ccr-colorado/resolve/main/LA2.mp4" type="video/mp4">
+                </video>
+            </div>
+        </div>
+    </div>
+    <div class="bottom-frame"></div>
+</body>
+</html>
